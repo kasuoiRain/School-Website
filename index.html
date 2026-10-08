@@ -24,6 +24,7 @@
     8) ข้อมูลอาจารย์            -> ตัวแปร teachers ใน <script>
     9) ข้อมูลนักเรียน           -> ตัวแปร students ใน <script>
    10) ข้อมูลติดต่อ / รายวิชา   -> ตัวแปร contacts และ teachers ใน <script>
+   11) เนื้อหารายวิชา          -> ตัวแปร curriculum ใน <script>
   ============================================================
 -->
 
@@ -551,6 +552,43 @@
   #contactMenu, #courseMenu{ min-width: 290px; }
   #contactMenu li a, #courseMenu li a{ white-space: nowrap; }
 
+
+  /* ---------------- COURSE POPUP ---------------- */
+  .modal.course-modal{ max-width: 780px; }
+  .course-desc{ margin:0 0 20px; font-size:15px; color:#3d4048; }
+  .grade-tabs{ display:flex; gap:6px; flex-wrap:wrap; margin: 0 0 18px; }
+  .grade-tabs button{
+    padding: 8px 18px; border:1px solid var(--line); background: var(--white);
+    font: inherit; font-size:14px; color: var(--ink); cursor:pointer;
+  }
+  .grade-tabs button:hover{ border-color: var(--gold); }
+  .grade-tabs button[aria-selected="true"]{ background: var(--ink); border-color: var(--ink); color: var(--white); }
+  .grade-tabs button:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+  .term-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+  .term-box{ border:1px solid var(--line); background: var(--white); padding: 18px 22px 12px; }
+  .term-box h4{ margin:0 0 8px; font-family: var(--font-display); font-size:15px; font-weight:600; color: var(--forest); }
+  .term-box ul{ margin:0; padding-left:18px; list-style:disc; }
+  .term-box li{ margin: 7px 0; font-size:14.5px; }
+  .modal-foot{
+    flex-shrink:0; display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    padding: 16px 34px; background: var(--white); border-top: 1px solid var(--line);
+  }
+  .foot-avatar{
+    width:46px; height:46px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    border:1.5px solid var(--gold); background: var(--ink); color: var(--gold-soft);
+    font-family: var(--font-display); font-size:20px;
+  }
+  .foot-who{ flex:1; min-width:180px; line-height:1.4; }
+  .foot-who small{ display:block; font-size:12.5px; color:#6b6f78; }
+  .foot-who strong{ font-family: var(--font-display); color: var(--ink); font-weight:600; }
+  .btn-sm{ padding: 8px 16px; font-size:13.5px; }
+  .btn-line{ border-color: var(--ink); color: var(--ink); background: transparent; }
+  .btn-line:hover{ background: var(--paper-2); }
+  @media (max-width: 640px){
+    .term-grid{ grid-template-columns: 1fr; }
+    .modal-foot{ padding: 14px 22px; }
+  }
+
   /* ---------------- FOOTER ---------------- */
   footer{
     background: var(--ink);
@@ -646,7 +684,7 @@
         <li>
           <a href="#home"><span>รายวิชา</span><span class="caret"></span></a>
           <ul class="dropdown" id="courseMenu">
-            <!-- รายวิชาสร้างอัตโนมัติจากตัวแปร teachers (วิชาที่อาจารย์แต่ละคนสอน) กดแล้วเปิดข้อมูลอาจารย์ผู้สอน -->
+            <!-- รายวิชาสร้างอัตโนมัติจากตัวแปร teachers (วิชาที่อาจารย์แต่ละคนสอน) กดแล้วเปิดข้อมูลรายวิชา (ตัวแปร curriculum) -->
           </ul>
         </li>
 
@@ -753,6 +791,34 @@
     </div>
   </div>
 </section>
+
+<!-- ============================================================
+     COURSE POPUP — ข้อมูลรายวิชา + สิ่งที่สอนแต่ละระดับชั้น/ภาคเรียน + ชื่อครูผู้สอน (ด้านล่าง)
+     เนื้อหาเติมจากตัวแปร curriculum
+     ============================================================ -->
+<div class="modal-overlay" id="courseModal" aria-hidden="true">
+  <div class="modal fixed-head course-modal" role="dialog" aria-modal="true" aria-labelledby="csTitle">
+    <div class="modal-top">
+      <button class="modal-close" id="courseClose" aria-label="ปิดหน้าต่าง">&times;</button>
+      <div>
+        <h3 id="csTitle"></h3>
+        <div class="role">เนื้อหาที่สอนในแต่ละระดับชั้นและภาคเรียน · ป.1 – ป.6</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <p class="course-desc" id="csDesc"></p>
+      <div class="grade-tabs" id="csTabs" role="tablist" aria-label="เลือกระดับชั้น"></div>
+      <div class="term-grid" id="csTerms"></div>
+      <div class="modal-note">* เนื้อหารายวิชาเป็นข้อมูลตัวอย่างที่สร้างขึ้น</div>
+    </div>
+    <div class="modal-foot">
+      <div class="foot-avatar" id="csAvatar"></div>
+      <div class="foot-who"><small>ครูผู้สอน</small><strong id="csTeacher"></strong></div>
+      <button type="button" class="btn btn-gold btn-sm" id="csTeacherBtn">ข้อมูลอาจารย์</button>
+      <button type="button" class="btn btn-line btn-sm" id="csContactBtn">ช่องทางติดต่อ</button>
+    </div>
+  </div>
+</div>
 
 <!-- ============================================================
      CONTACT POPUP — ช่องทางติดต่อผู้อำนวยการ / อาจารย์ (เนื้อหาเติมจากตัวแปร contacts)
@@ -1456,6 +1522,7 @@
     if (e.key !== 'Escape') return;
     if (studentOverlay.classList.contains('show')) closeStudent();
     else if (rosterOverlay.classList.contains('show')) closeRoster();
+    else if (courseOverlay.classList.contains('show')) closeCourse();
     else if (contactOverlay.classList.contains('show')) closeContact();
     else if (modalEl.classList.contains('show')) closeTeacher();
   });
@@ -1527,7 +1594,7 @@
   document.getElementById('contactClose').addEventListener('click', closeContact);
   contactOverlay.addEventListener('click', (e) => { if (e.target === contactOverlay) closeContact(); });
 
-  /* ---- รายวิชา: สร้างจากวิชาที่อาจารย์แต่ละคนสอน กดแล้วเปิดข้อมูลอาจารย์ผู้สอน ---- */
+  /* ---- รายวิชา: สร้างจากวิชาที่อาจารย์แต่ละคนสอน กดแล้วเปิด popup ข้อมูลรายวิชา ---- */
   const courseMenu = document.getElementById('courseMenu');
   teachers.forEach((t, i) => {
     const li = document.createElement('li');
@@ -1538,8 +1605,121 @@
     const a = e.target.closest('a[data-t]');
     if (!a) return;
     e.preventDefault();
-    openTeacher(teachers[a.dataset.t], a);
+    openCourse(Number(a.dataset.t), a);
   });
+
+  /* ============================================================
+     แก้ไขตรงนี้ (11): เนื้อหารายวิชา (ข้อมูลตัวอย่างที่สร้างขึ้น)
+     ลำดับต้องตรงกับตัวแปร teachers: 0=ภาษาไทย 1=สังคมศึกษา 2=ศิลปะ 3=ภาษาอังกฤษ
+     terms = 6 ระดับชั้น (ป.1 - ป.6) ; แต่ละระดับชั้นมี [ภาค 1, ภาค 2] ; แต่ละภาคเป็นรายการหัวข้อ
+     ============================================================ */
+  const curriculum = [
+    { desc: "พัฒนาทักษะการฟัง พูด อ่าน เขียน และสร้างความภาคภูมิใจในภาษาและวรรณคดีไทย ผ่านการอ่าน การเล่าเรื่อง และการเขียนเชิงสร้างสรรค์",
+      terms: [
+        [["พยัญชนะและสระไทย","การอ่านแจกลูกสะกดคำ","การเขียนพยัญชนะและสระ","ฟังนิทานและเล่าเรื่องสั้น ๆ"],
+         ["วรรณยุกต์และการผันเสียง","คำที่มีตัวสะกดแม่ ก กา – แม่กน","อ่านประโยคสั้น ๆ","คัดลายมือและเขียนประโยค"]],
+        [["คำที่สะกดตรงและไม่ตรงมาตรา","การอ่านจับใจความจากนิทาน","การเขียนบรรยายภาพ","มารยาทการฟังและการพูด"],
+         ["คำควบกล้ำและอักษรนำ","บทร้อยกรองง่าย ๆ","การเขียนบันทึกประจำวัน","การเล่าเรื่องจากประสบการณ์"]],
+        [["ชนิดของคำ: นาม สรรพนาม กริยา","การอ่านเรื่องสั้นและสรุปใจความ","การเขียนเรื่องจากภาพ","สุภาษิตและคำพังเพยง่าย ๆ"],
+         ["คำคล้องจองและบทร้อยกรอง","การเขียนจดหมายถึงเพื่อน","การอ่านออกเสียงอย่างมีจังหวะ","การใช้พจนานุกรม"]],
+        [["ประโยคและส่วนประกอบของประโยค","การอ่านจับใจความสำคัญ","การเขียนเรียงความสั้น","นิทานพื้นบ้านและวรรณกรรมท้องถิ่น"],
+         ["คำราชาศัพท์เบื้องต้น","กลอนสุภาพ","การเขียนย่อความ","การพูดแสดงความคิดเห็นหน้าชั้น"]],
+        [["ชนิดและหน้าที่ของคำ (บุพบท สันธาน)","การอ่านวิเคราะห์เรื่อง","การเขียนเรียงความและย่อความ","วรรณคดีไทยสำหรับเด็ก"],
+         ["คำภาษาต่างประเทศในภาษาไทย","โคลงและกาพย์เบื้องต้น","การเขียนรายงานจากการค้นคว้า","การอภิปรายกลุ่ม"]],
+        [["การใช้ภาษาให้เหมาะแก่กาลเทศะ","การอ่านแยกข้อเท็จจริงและความคิดเห็น","การเขียนเชิงสร้างสรรค์","การนำเสนอผลงานปากเปล่า"],
+         ["ทบทวนหลักภาษาไทยก่อนขึ้นมัธยม","การแต่งกลอน","โครงงานภาษาไทยปลายปี","ทบทวนและประเมินผลปลายภาค"]]
+      ] },
+    { desc: "เรียนรู้เรื่องตนเอง ครอบครัว ชุมชน ประวัติศาสตร์ ภูมิศาสตร์ ศาสนา หน้าที่พลเมือง และเศรษฐกิจเบื้องต้น เพื่อเข้าใจสังคมที่อยู่ร่วมกัน",
+      terms: [
+        [["ตนเองและครอบครัวของฉัน","บทบาทหน้าที่ในบ้านและห้องเรียน","กฎระเบียบของโรงเรียน","วันสำคัญของชาติเบื้องต้น"],
+         ["ชุมชนใกล้ตัว","อาชีพในชุมชน","การใช้เงินและการออม","ศาสนาและประเพณีท้องถิ่น"]],
+        [["เพื่อนบ้านและการอยู่ร่วมกัน","สิทธิและหน้าที่ของนักเรียน","ทิศและแผนผังง่าย ๆ","วันสำคัญทางศาสนา"],
+         ["การผลิตและการบริโภค","สถานที่สำคัญในจังหวัด","ประวัติความเป็นมาของโรงเรียน","การรักษาสิ่งแวดล้อมในชุมชน"]],
+        [["จังหวัดของเรา: ที่ตั้งและลักษณะภูมิศาสตร์","การปกครองท้องถิ่น","หน้าที่พลเมืองดี","พุทธประวัติและหลักธรรมเบื้องต้น"],
+         ["ประวัติศาสตร์ท้องถิ่น","การค้าขายและการแลกเปลี่ยน","แผนที่และสัญลักษณ์","ศาสนาต่าง ๆ ในประเทศไทย"]],
+        [["ภูมิศาสตร์ประเทศไทย: ภาคต่าง ๆ","สถาบันพระมหากษัตริย์กับสังคมไทย","สิทธิเด็กและการคุ้มครอง","ศีล 5 และการนำไปใช้"],
+         ["อาณาจักรสุโขทัยเบื้องต้น","เศรษฐกิจพอเพียง","ประเทศเพื่อนบ้านในอาเซียน","การใช้ทรัพยากรอย่างยั่งยืน"]],
+        [["ภูมิศาสตร์เอเชียตะวันออกเฉียงใต้","สมัยอยุธยาและกรุงธนบุรี","รัฐธรรมนูญและหน้าที่พลเมือง","ศาสนาและวัฒนธรรมของเพื่อนบ้าน"],
+         ["สมัยรัตนโกสินทร์","ระบบเศรษฐกิจและการเงินเบื้องต้น","ภัยพิบัติทางธรรมชาติและการเตรียมรับมือ","ความหลากหลายทางวัฒนธรรม"]],
+        [["ภูมิศาสตร์โลก: ทวีปและมหาสมุทร","ประวัติศาสตร์ไทยกับโลก","สหประชาชาติและความร่วมมือระหว่างประเทศ","สิทธิมนุษยชนเบื้องต้น"],
+         ["เศรษฐกิจโลกและการค้าระหว่างประเทศ","การเป็นพลเมืองดิจิทัล","โครงงานสังคมศึกษา","ทบทวนและประเมินผลปลายภาค"]]
+      ] },
+    { desc: "ส่งเสริมจินตนาการและการแสดงออกผ่านทัศนศิลป์ เรียนรู้เทคนิคการวาด ระบายสี ปั้น และออกแบบ พร้อมชื่นชมผลงานศิลปะของไทยและของโลก",
+      terms: [
+        [["เส้นและรูปร่างพื้นฐาน","การระบายสีด้วยสีเทียนและสีไม้","การปั้นดินน้ำมัน","ศิลปะจากธรรมชาติ"],
+         ["สีขั้นต้นและการผสมสีอย่างง่าย","การฉีกปะกระดาษ","วาดภาพครอบครัวของฉัน","เล่าเรื่องจากภาพวาด"]],
+        [["รูปร่างและรูปทรง","การวาดภาพสัตว์และพืช","การพิมพ์ภาพด้วยวัสดุธรรมชาติ","การดูแลอุปกรณ์ศิลปะ"],
+         ["สีอุ่นและสีเย็น","การตัดปะกระดาษ","ภาพวาดบรรยากาศ","ชมผลงานและแสดงความรู้สึก"]],
+        [["เส้น สี และน้ำหนักด้วยดินสอ","การวาดภาพนิ่ง","การสร้างงานจากวัสดุเหลือใช้","ศิลปะพื้นบ้านของไทย"],
+         ["การระบายสีน้ำเบื้องต้น","ภาพทิวทัศน์ใกล้-ไกล","งานปั้นจากดินเหนียว","ลวดลายไทยง่าย ๆ"]],
+        [["องค์ประกอบศิลป์: จังหวะและความสมดุล","การวาดภาพคนและสัดส่วน","เทคนิคสีน้ำและสีโปสเตอร์","ศิลปินไทยและผลงานสำคัญ"],
+         ["ภาพพิมพ์แกะ","งานประดิษฐ์ตามเทศกาล","ภาพวาดเล่าเรื่องวัฒนธรรมท้องถิ่น","การวิจารณ์งานศิลปะเบื้องต้น"]],
+        [["ทัศนียภาพและมุมมอง","การร่างภาพและลงสี","งานปั้นนูนต่ำ","ศิลปะสมัยต่าง ๆ ของโลก"],
+         ["การออกแบบโปสเตอร์","การออกแบบลวดลายไทยประยุกต์","ภาพเหมือนบุคคล","นิทรรศการผลงานในห้องเรียน"]],
+        [["เทคนิคผสมและการทดลองวัสดุ","การออกแบบสัญลักษณ์ประจำกลุ่ม","ศิลปะร่วมสมัย","แฟ้มสะสมผลงาน"],
+         ["โครงงานศิลปะประจำปี","จัดนิทรรศการผลงานนักเรียนประจำปี","การนำเสนอแนวคิดของผลงาน","ทบทวนและประเมินผลปลายภาค"]]
+      ] },
+    { desc: "สร้างความมั่นใจในการสื่อสารภาษาอังกฤษทั้งการฟัง พูด อ่าน และเขียน ผ่านเรื่องเล่า เพลง กิจกรรมกลุ่ม และโครงงาน (เนื้อหาด้านล่างเป็นภาษาอังกฤษ)",
+      terms: [
+        [["Alphabet and phonics (A–Z)","Greetings and classroom language","Colors and numbers 1–20","Simple songs and rhymes"],
+         ["Family and animal vocabulary","Simple sentences: This is… / I have…","Sight words","Picture-book reading"]],
+        [["Phonics: blends and digraphs","Everyday objects and food","Questions: What / Who / Where","Copying and writing short sentences"],
+         ["Days, months and weather","Present simple: I like / I can","Short story reading","Show-and-tell"]],
+        [["Phonics and spelling patterns","Daily routines","Present simple tense","Writing 3–5 sentence paragraphs"],
+         ["Prepositions of place","Describing people and places","Reading short stories with questions","Role-play dialogues"]],
+        [["Past simple tense","Reading comprehension: fiction","Narrative paragraph writing","Vocabulary: school and hobbies"],
+         ["Comparatives and superlatives","Describing a process","Poetry and creative writing","Class presentations"]],
+        [["Future forms (will / going to)","Reading non-fiction texts","Letter and email writing","Listening for main ideas"],
+         ["Modal verbs (can, must, should)","Descriptive writing","Expressing simple opinions in a debate","Book report project"]],
+        [["Present perfect tense","Essay structure","Reading critically: fact vs. opinion","Public speaking skills"],
+         ["Reported speech (introduction)","Story writing project","Preparing for secondary-level English","Review and end-of-term assessment"]]
+      ] }
+  ];
+
+  const courseOverlay = document.getElementById('courseModal');
+  let courseIdx = 0;
+
+  function renderCourseGrade(g){
+    const [t1, t2] = curriculum[courseIdx].terms[g];
+    document.querySelectorAll('#csTabs button').forEach((b, i) => b.setAttribute('aria-selected', i === g ? 'true' : 'false'));
+    const box = (label, list) => `<div class="term-box"><h4>${label}</h4><ul>${list.map(x => `<li>${x}</li>`).join('')}</ul></div>`;
+    document.getElementById('csTerms').innerHTML = box(`ป.${g + 1} · ภาคเรียนที่ 1`, t1) + box(`ป.${g + 1} · ภาคเรียนที่ 2`, t2);
+  }
+
+  function openCourse(i, trigger){
+    courseIdx = i;
+    const t = teachers[i];
+    if (trigger) trigger.blur();
+    document.getElementById('csTitle').textContent = t.subject;
+    document.getElementById('csDesc').textContent = curriculum[i].desc;
+    document.getElementById('csTabs').innerHTML = [1, 2, 3, 4, 5, 6].map((g, k) =>
+      `<button type="button" role="tab" data-g="${k}" aria-selected="false">ป.${g}</button>`).join('');
+    renderCourseGrade(0);
+    document.getElementById('csAvatar').textContent = t.initial;
+    document.getElementById('csTeacher').textContent = t.name;
+    mainMenu.classList.remove('open');
+    courseOverlay.classList.add('show');
+    courseOverlay.setAttribute('aria-hidden', 'false');
+    courseOverlay.querySelector('.modal-body').scrollTop = 0;
+    syncBodyLock();
+    document.getElementById('courseClose').focus();
+  }
+  function closeCourse(){
+    courseOverlay.classList.remove('show');
+    courseOverlay.setAttribute('aria-hidden', 'true');
+    syncBodyLock();
+  }
+  document.getElementById('csTabs').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-g]');
+    if (b) renderCourseGrade(Number(b.dataset.g));
+  });
+  document.getElementById('csTeacherBtn').addEventListener('click', () => { closeCourse(); openTeacher(teachers[courseIdx], null); });
+  document.getElementById('csContactBtn').addEventListener('click', () => {
+    closeCourse();
+    openContact(contacts.find(c => c.t === courseIdx), null);
+  });
+  document.getElementById('courseClose').addEventListener('click', closeCourse);
+  courseOverlay.addEventListener('click', (e) => { if (e.target === courseOverlay) closeCourse(); });
 </script>
 
 </body>
