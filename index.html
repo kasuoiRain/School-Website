@@ -23,6 +23,7 @@
     7) ลิงก์โซเชียลมีเดีย        -> ในเมนู "โซเชียลมีเดีย"
     8) ข้อมูลอาจารย์            -> ตัวแปร teachers ใน <script>
     9) ข้อมูลนักเรียน           -> ตัวแปร students ใน <script>
+   10) ข้อมูลติดต่อ / รายวิชา   -> ตัวแปร contacts และ teachers ใน <script>
   ============================================================
 -->
 
@@ -542,6 +543,14 @@
     .roster .meta{ display:none; }
   }
 
+
+  /* ---------------- CONTACT POPUP ---------------- */
+  .info-list dd a{ color: var(--forest); border-bottom: 1px solid var(--gold); }
+  .info-list dd a:hover{ color: var(--ink); background: var(--gold-soft); }
+  .dropdown li a small{ color:#8a8d94; font-size:12.5px; margin-left:6px; }
+  #contactMenu, #courseMenu{ min-width: 290px; }
+  #contactMenu li a, #courseMenu li a{ white-space: nowrap; }
+
   /* ---------------- FOOTER ---------------- */
   footer{
     background: var(--ink);
@@ -636,17 +645,16 @@
         <!-- 3. รายวิชา -->
         <li>
           <a href="#home"><span>รายวิชา</span><span class="caret"></span></a>
-          <ul class="dropdown">
-            <!-- แก้ไขตรงนี้ (3): ปรับชื่อ/จำนวนช่วงชั้นตามหลักสูตรจริง -->
-            <li><a href="#">Early Years</a></li>
-            <li><a href="#">Primary School</a></li>
-            <li><a href="#">Secondary School</a></li>
-            <li><a href="#">IB Diploma Programme</a></li>
+          <ul class="dropdown" id="courseMenu">
+            <!-- รายวิชาสร้างอัตโนมัติจากตัวแปร teachers (วิชาที่อาจารย์แต่ละคนสอน) กดแล้วเปิดข้อมูลอาจารย์ผู้สอน -->
           </ul>
         </li>
 
-        <!-- 4. ข้อมูลติดต่อ (ยังไม่มีเนื้อหา) -->
-        <li><a href="#">ข้อมูลติดต่อ</a></li>
+        <!-- 4. ข้อมูลติดต่อ — ผู้อำนวยการ + อาจารย์แต่ละวิชา (สร้างจากตัวแปร contacts ใน <script>) -->
+        <li>
+          <a href="#home"><span>ข้อมูลติดต่อ</span><span class="caret"></span></a>
+          <ul class="dropdown" id="contactMenu"></ul>
+        </li>
 
         <!-- 5. โซเชียลมีเดีย -->
         <li>
@@ -745,6 +753,26 @@
     </div>
   </div>
 </section>
+
+<!-- ============================================================
+     CONTACT POPUP — ช่องทางติดต่อผู้อำนวยการ / อาจารย์ (เนื้อหาเติมจากตัวแปร contacts)
+     ============================================================ -->
+<div class="modal-overlay" id="contactModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cName">
+    <div class="modal-top">
+      <button class="modal-close" id="contactClose" aria-label="ปิดหน้าต่าง">&times;</button>
+      <div class="avatar" id="cAvatar"></div>
+      <div>
+        <h3 id="cName"></h3>
+        <div class="role" id="cRole"></div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <dl class="info-list" id="cList"></dl>
+      <div class="modal-note">* ข้อมูลติดต่อทั้งหมดเป็นข้อมูลตัวอย่างที่สร้างขึ้น ไม่ใช่ช่องทางจริง</div>
+    </div>
+  </div>
+</div>
 
 <!-- ============================================================
      STUDENT POPUPS — (1) รายชื่อนักเรียนของระดับชั้น  (2) ข้อมูลนักเรียนรายคน
@@ -1428,7 +1456,89 @@
     if (e.key !== 'Escape') return;
     if (studentOverlay.classList.contains('show')) closeStudent();
     else if (rosterOverlay.classList.contains('show')) closeRoster();
+    else if (contactOverlay.classList.contains('show')) closeContact();
     else if (modalEl.classList.contains('show')) closeTeacher();
+  });
+
+  /* ============================================================
+     แก้ไขตรงนี้ (10): ข้อมูลติดต่อ (ข้อมูลตัวอย่างที่สร้างขึ้น — เปลี่ยนเป็นของจริงได้)
+     - รายการแรก = ผู้อำนวยการ, รายการถัดไป = อาจารย์ตามลำดับในตัวแปร teachers
+       (t: 0=ภาษาไทย, 1=สังคมศึกษา, 2=ศิลปะ, 3=ภาษาอังกฤษ)
+     - ชื่ออาจารย์/วิชา ดึงจากตัวแปร teachers อัตโนมัติ
+     ============================================================ */
+  const contacts = [
+    { name: "ดร.อัญชลี ปัญญาวุฒิ", role: "ผู้อำนวยการโรงเรียน", initial: "อ",
+      email: "director@crestview.example", phone: "02-555-0100 ต่อ 101", line: "@crestview.director",
+      room: "ห้องผู้อำนวยการ อาคาร A ชั้น 2", hours: "จันทร์–ศุกร์ 08:00–16:30 (นัดหมายล่วงหน้า)" },
+    { t: 0, email: "sunisa.w@crestview.example", phone: "02-555-0100 ต่อ 201", line: "@crestview.thai",
+      room: "ห้องพักครูภาษาไทย อาคาร B ชั้น 1", hours: "จันทร์–ศุกร์ 08:00–16:00" },
+    { t: 1, email: "thanakorn.s@crestview.example", phone: "02-555-0100 ต่อ 202", line: "@crestview.social",
+      room: "ห้องพักครูสังคมศึกษา อาคาร B ชั้น 2", hours: "จันทร์–ศุกร์ 08:00–16:00" },
+    { t: 2, email: "pimchanok.a@crestview.example", phone: "02-555-0100 ต่อ 203", line: "@crestview.art",
+      room: "ห้องศิลปะ อาคาร C ชั้น 1", hours: "จันทร์–ศุกร์ 08:30–16:30" },
+    { t: 3, email: "daniel.h@crestview.example", phone: "02-555-0100 ต่อ 204", line: "@crestview.english",
+      room: "ห้องพักครูภาษาอังกฤษ อาคาร B ชั้น 2", hours: "Mon–Fri 08:00–16:00" }
+  ];
+  contacts.forEach(c => {
+    if (c.t !== undefined){
+      const t = teachers[c.t];
+      c.name = t.name; c.initial = t.initial; c.role = 'ครูผู้สอนวิชา' + t.subject;
+    }
+  });
+
+  const contactOverlay = document.getElementById('contactModal');
+  const contactMenu = document.getElementById('contactMenu');
+  contacts.forEach((c, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<a href="#" data-c="${i}">${c.name}<small>${c.t === undefined ? 'ผู้อำนวยการ' : teachers[c.t].subject.split(' ')[0]}</small></a>`;
+    contactMenu.appendChild(li);
+  });
+  contactMenu.addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-c]');
+    if (!a) return;
+    e.preventDefault();
+    openContact(contacts[a.dataset.c], a);
+  });
+
+  function openContact(c, trigger){
+    if (trigger) trigger.blur();
+    document.getElementById('cAvatar').textContent = c.initial;
+    document.getElementById('cName').textContent = c.name;
+    document.getElementById('cRole').textContent = c.role;
+    const rows = [
+      ['อีเมล', `<a href="mailto:${c.email}">${c.email}</a>`],
+      ['โทรศัพท์', `<a href="tel:${c.phone.replace(/[^0-9+]/g, '')}">${c.phone}</a>`],
+      ['LINE', c.line],
+      ['สถานที่', c.room],
+      ['เวลาที่ติดต่อได้', c.hours]
+    ];
+    document.getElementById('cList').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+    mainMenu.classList.remove('open');
+    contactOverlay.classList.add('show');
+    contactOverlay.setAttribute('aria-hidden', 'false');
+    syncBodyLock();
+    document.getElementById('contactClose').focus();
+  }
+  function closeContact(){
+    contactOverlay.classList.remove('show');
+    contactOverlay.setAttribute('aria-hidden', 'true');
+    syncBodyLock();
+  }
+  document.getElementById('contactClose').addEventListener('click', closeContact);
+  contactOverlay.addEventListener('click', (e) => { if (e.target === contactOverlay) closeContact(); });
+
+  /* ---- รายวิชา: สร้างจากวิชาที่อาจารย์แต่ละคนสอน กดแล้วเปิดข้อมูลอาจารย์ผู้สอน ---- */
+  const courseMenu = document.getElementById('courseMenu');
+  teachers.forEach((t, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<a href="#" data-t="${i}">${t.subject}<small>${t.name.split(' ')[0]}</small></a>`;
+    courseMenu.appendChild(li);
+  });
+  courseMenu.addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-t]');
+    if (!a) return;
+    e.preventDefault();
+    openTeacher(teachers[a.dataset.t], a);
   });
 </script>
 
