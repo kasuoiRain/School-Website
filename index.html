@@ -19,7 +19,7 @@
     3) เมนูย่อยแต่ละแท็บ         -> ในแท็ก <nav><ul>
     4) ข้อความหน้าแรก (Hero)   -> ใน <section id="home">
     5) ข่าวสารของโรงเรียน       -> ตัวแปร newsItems ใน <script>
-    6) วันสำคัญในปฏิทิน         -> ตัวแปร schoolEvents ใน <script>
+    6) วันหยุด/สอบ/กิจกรรมในปฏิทิน -> ตัวแปร calendarEvents ใน <script>
     7) ลิงก์โซเชียลมีเดีย        -> ในเมนู "โซเชียลมีเดีย"
     8) ข้อมูลอาจารย์            -> ตัวแปร teachers ใน <script>
     9) ข้อมูลนักเรียน           -> ตัวแปร students ใน <script>
@@ -612,6 +612,48 @@
   .slot:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
   table.grades tbody th small{ display:block; font-size:11.5px; font-weight:400; color:#6b6f78; }
 
+
+  /* ---------------- CALENDAR EVENTS ---------------- */
+  .cal-cell{ outline-offset:-2px; }
+  .cal-cell.has-ev{ cursor:pointer; }
+  .cal-cell.has-ev:hover{ filter: brightness(0.96); }
+  .cal-cell.has-ev:focus-visible{ outline: 2px solid var(--ink); }
+  .cal-cell.t-holiday{ background:#F2DDD6; }
+  .cal-cell.t-exam{ background:#D9E6DD; }
+  .cal-cell.t-event{ background: var(--gold-soft); }
+  .cal-cell.t-term{ background:#DCE1EE; }
+  .cal-cell.sel{ box-shadow: inset 0 0 0 2px var(--ink); }
+  .cal-cell.sel.today{ box-shadow: inset 0 0 0 2px var(--ink), inset 0 0 0 4px var(--forest); }
+  .cal-ev{
+    display:block; margin-top:5px; padding:2px 6px;
+    border-left:3px solid var(--ec); background: rgba(255,255,255,0.6);
+    font-size:11.5px; line-height:1.35; color: var(--ink);
+  }
+  .cal-ev.cont{ height:6px; padding:0; border-left:0; background: var(--ec); opacity:.5; }
+  .ev-holiday{ --ec:#B5483A; } .ev-exam{ --ec:#2F4A3C; } .ev-event{ --ec:#B8923D; } .ev-term{ --ec:#3B4F86; }
+  .cal-more{ display:block; margin-top:4px; font-size:11px; color:#6b6f78; }
+
+  .cal-legend{ flex-wrap:wrap; gap: 8px 24px; }
+  .cal-legend .lg{ display:inline-flex; align-items:center; gap:8px; }
+  .cal-legend .lg i{ display:inline-block; width:14px; height:14px; border:1px solid var(--line); }
+
+  .cal-note h4{ margin:0 0 6px; font-family: var(--font-display); font-size:17px; color: var(--ink); font-weight:600; }
+  .cal-note-head{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
+  .ev-item{ display:grid; grid-template-columns: 200px 1fr; gap: 6px 22px; padding: 16px 0; border-top: 1px solid var(--line); }
+  .ev-date{ font-size:13.5px; color: var(--forest); font-weight:500; }
+  .ev-chip{ display:block; width:fit-content; margin-top:6px; padding:1px 9px; font-size:11.5px; font-weight:400; color: var(--ink); border-left:3px solid var(--ec); background: rgba(0,0,0,0.04); }
+  .ev-title{ font-weight:600; color: var(--ink); font-size:15px; }
+  .ev-detail{ margin:4px 0 0; font-size:13.5px; color:#4a4e57; }
+  .ev-meta{ margin-top:6px; font-size:12px; color:#8a8d94; }
+  .cal-empty{ color:#8a8d94; font-size:14px; padding: 8px 0; }
+
+  @media (max-width: 640px){
+    .cal-cell{ min-height: 58px; padding: 6px 5px; }
+    .cal-ev{ height:6px; padding:0; border-left:0; background: var(--ec); margin-top:4px; }
+    .cal-ev .evt, .cal-more{ display:none; }
+    .ev-item{ grid-template-columns: 1fr; }
+  }
+
   /* ---------------- FOOTER ---------------- */
   footer{
     background: var(--ink);
@@ -811,14 +853,14 @@
 
 <!-- ============================================================
      CALENDAR — ปฏิทินกิจกรรม พร้อมไฮไลต์วันสำคัญ
-     แก้ไขตรงนี้ (6): เพิ่ม/แก้วันสำคัญได้ในตัวแปร schoolEvents ด้านล่าง
+     แก้ไขตรงนี้ (6): เพิ่ม/แก้วันหยุด วันสอบ และกิจกรรมได้ในตัวแปร calendarEvents ด้านล่าง
      ============================================================ -->
 <section id="calendar" class="section-pad" style="background:var(--white)">
   <div class="container">
     <div class="section-head">
       <div>
         <h2>ปฏิทินกิจกรรม</h2>
-        <p class="sub">ตรวจสอบวันสำคัญและกิจกรรมของโรงเรียนในแต่ละเดือน</p>
+        <p class="sub">วันหยุดราชการ กำหนดสอบ เปิด-ปิดภาคเรียน และกิจกรรมสำคัญของโรงเรียน กดที่วันที่ไฮไลต์เพื่อดูรายละเอียด</p>
       </div>
     </div>
 
@@ -831,7 +873,13 @@
         </div>
       </div>
       <div class="cal-grid" id="calGrid"><!-- สร้างจาก JavaScript ด้านล่าง --></div>
-      <div class="cal-legend"><span class="swatch"></span> วันที่มีกิจกรรมสำคัญของโรงเรียน</div>
+      <div class="cal-legend">
+        <span class="lg"><i style="background:#F2DDD6"></i>วันหยุดราชการ</span>
+        <span class="lg"><i style="background:#D9E6DD"></i>สอบ</span>
+        <span class="lg"><i style="background:var(--gold-soft)"></i>กิจกรรมสำคัญของโรงเรียน</span>
+        <span class="lg"><i style="background:#DCE1EE"></i>เปิด-ปิดภาคเรียน</span>
+        <span class="lg"><i style="box-shadow:inset 0 0 0 1.5px var(--forest)"></i>วันนี้</span>
+      </div>
       <div class="cal-note" id="calNote"><!-- แสดงรายละเอียดวันสำคัญของเดือนที่กำลังดู --></div>
     </div>
   </div>
@@ -1019,32 +1067,132 @@
   renderNews();
 
   /* ============================================================
-     แก้ไขตรงนี้ (6): วันสำคัญของโรงเรียนที่จะถูกไฮไลต์ในปฏิทิน
-     รูปแบบวันที่: "YYYY-MM-DD" (ปี ค.ศ.)
+     แก้ไขตรงนี้ (6): วันหยุด / สอบ / เปิด-ปิดภาคเรียน / กิจกรรมสำคัญ ในปฏิทิน
+     รูปแบบ: { start:"YYYY-MM-DD", end:"YYYY-MM-DD" (ไม่ใส่ = วันเดียว), type, title, detail, src (ไม่ใส่ = ใช้ค่าเริ่มต้นของประเภท) }
+     ปี ค.ศ.  |  type: "holiday" วันหยุดราชการ, "exam" สอบ, "event" กิจกรรมสำคัญ, "term" เปิด-ปิดภาคเรียน
+
+     ที่มาของข้อมูล:
+     - วันหยุดราชการ: ปฏิทินวันหยุดราชการประจำปี 2569 (ข้อมูลปี 2569 ครบทั้งปี; ปี 2570 ใส่เฉพาะวันขึ้นปีใหม่)
+     - เปิด-ปิดภาคเรียน/สอบ/กิจกรรม: ปรับจากปฏิทินของ สพฐ. (เปิดภาคเรียนที่ 1 วันที่ 14 พ.ค. 2569)
+       และปฏิทินโรงเรียนมัธยมสาธิตมหาวิทยาลัยนเรศวร ปีการศึกษา 2569
+       "เป็นข้อมูลตัวอย่างของ Crestview" ควรแก้ให้ตรงกับประกาศจริงของโรงเรียนก่อนใช้งาน
      ============================================================ */
-  const schoolEvents = [
-    { date: "2026-09-30", label: "วันสำคัญของโรงเรียน" }
-    // เพิ่มวันสำคัญอื่น ๆ ได้ เช่น:
-    // { date: "2026-11-15", label: "วันกีฬาสี" },
+  const EVENT_TYPES = {
+    holiday: { label: "วันหยุดราชการ", rank: 1, src: "ปฏิทินวันหยุดราชการประจำปี 2569" },
+    exam:    { label: "สอบ",             rank: 2, src: "ปรับจากปฏิทินการศึกษาโรงเรียนอื่น (ข้อมูลตัวอย่างของ Crestview)" },
+    event:   { label: "กิจกรรมสำคัญของโรงเรียน", rank: 3, src: "ปรับจากปฏิทินกิจกรรมโรงเรียนอื่น (ข้อมูลตัวอย่างของ Crestview)" },
+    term:    { label: "เปิด-ปิดภาคเรียน", rank: 4, src: "ปรับจากปฏิทินการศึกษาโรงเรียนอื่น (ข้อมูลตัวอย่างของ Crestview)" }
+  };
+
+  const calendarEvents = [
+    // ---------- วันหยุดราชการ 2569 ----------
+    { start:"2026-01-01", type:"holiday", title:"วันขึ้นปีใหม่", detail:"วันหยุดนักขัตฤกษ์ตามประเพณี โรงเรียนหยุดทำการ" },
+    { start:"2026-01-02", type:"holiday", title:"วันหยุดทำการเพิ่มเป็นกรณีพิเศษ", detail:"วันหยุดราชการที่เพิ่มเป็นกรณีพิเศษ ต่อเนื่องกับวันขึ้นปีใหม่ ทำให้หยุดยาว 4 วัน (1–4 ม.ค.)" },
+    { start:"2026-03-03", type:"holiday", title:"วันมาฆบูชา", detail:"วันสำคัญทางพระพุทธศาสนา (วันธรรมสมาคม) โรงเรียนหยุดทำการ" },
+    { start:"2026-04-06", type:"holiday", title:"วันจักรี", detail:"วันหยุดเพื่อน้อมรำลึกพระบาทสมเด็จพระพุทธยอดฟ้าจุฬาโลกมหาราช ปฐมกษัตริย์แห่งราชวงศ์จักรี" },
+    { start:"2026-04-13", end:"2026-04-15", type:"holiday", title:"วันสงกรานต์", detail:"หยุดเทศกาลปีใหม่ไทย 3 วัน (13–15 เม.ย.) ตรงกับช่วงปิดภาคเรียนฤดูร้อน" },
+    { start:"2026-05-01", type:"holiday", title:"วันแรงงานแห่งชาติ", detail:"หยุดเฉพาะภาคเอกชนและรัฐวิสาหกิจ (ไม่ใช่วันหยุดราชการ)" },
+    { start:"2026-05-04", type:"holiday", title:"วันฉัตรมงคล", detail:"วันหยุดราชการเนื่องในวันคล้ายวันบรมราชาภิเษก" },
+    { start:"2026-05-11", type:"holiday", title:"วันพืชมงคล", detail:"หยุดเฉพาะราชการ ก่อนเปิดภาคเรียนที่ 1 เพียงไม่กี่วัน" },
+    { start:"2026-05-31", type:"holiday", title:"วันวิสาขบูชา", detail:"วันสำคัญทางพระพุทธศาสนา ตรงกับวันอาทิตย์ จึงมีวันหยุดชดเชยในวันจันทร์ถัดไป" },
+    { start:"2026-06-01", type:"holiday", title:"หยุดชดเชยวันวิสาขบูชา", detail:"วันหยุดชดเชยเนื่องจากวันวิสาขบูชาตรงกับวันอาทิตย์ที่ 31 พฤษภาคม" },
+    { start:"2026-06-03", type:"holiday", title:"วันเฉลิมพระชนมพรรษา สมเด็จพระนางเจ้าฯ พระบรมราชินี", detail:"วันหยุดราชการ โรงเรียนหยุดทำการ" },
+    { start:"2026-07-28", type:"holiday", title:"วันเฉลิมพระชนมพรรษา พระบาทสมเด็จพระเจ้าอยู่หัว", detail:"วันหยุดราชการ ต่อเนื่องกับวันอาสาฬหบูชาและวันเข้าพรรษา" },
+    { start:"2026-07-29", type:"holiday", title:"วันอาสาฬหบูชา", detail:"วันสำคัญทางพระพุทธศาสนา หยุดทั้งราชการ เอกชน และธนาคาร" },
+    { start:"2026-07-30", type:"holiday", title:"วันเข้าพรรษา", detail:"หยุดเฉพาะราชการ (ภาคเอกชนและธนาคารไม่หยุด)" },
+    { start:"2026-08-12", type:"holiday", title:"วันแม่แห่งชาติ", detail:"วันเฉลิมพระชนมพรรษาสมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง โรงเรียนหยุดทำการ" },
+    { start:"2026-10-13", type:"holiday", title:"วันคล้ายวันสวรรคต ร.9", detail:"วันคล้ายวันสวรรคตพระบาทสมเด็จพระบรมชนกาธิเบศร มหาภูมิพลอดุลยเดชมหาราช บรมนาถบพิตร อยู่ในช่วงปิดภาคเรียนที่ 1" },
+    { start:"2026-10-23", type:"holiday", title:"วันปิยมหาราช", detail:"วันคล้ายวันสวรรคตพระบาทสมเด็จพระจุลจอมเกล้าเจ้าอยู่หัว อยู่ในช่วงปิดภาคเรียนที่ 1" },
+    { start:"2026-12-05", type:"holiday", title:"วันพ่อแห่งชาติ", detail:"วันคล้ายวันพระบรมราชสมภพของ ร.9 และวันชาติ ตรงกับวันเสาร์ จึงมีวันหยุดชดเชยในวันที่ 7 ธ.ค." },
+    { start:"2026-12-07", type:"holiday", title:"หยุดชดเชยวันพ่อแห่งชาติ", detail:"วันหยุดชดเชยเนื่องจากวันพ่อแห่งชาติตรงกับวันเสาร์" },
+    { start:"2026-12-10", type:"holiday", title:"วันรัฐธรรมนูญ", detail:"วันหยุดราชการ โรงเรียนหยุดทำการ" },
+    { start:"2026-12-31", type:"holiday", title:"วันสิ้นปี", detail:"วันหยุดราชการและวันหยุดธนาคาร" },
+    { start:"2027-01-01", type:"holiday", title:"วันขึ้นปีใหม่", detail:"วันหยุดนักขัตฤกษ์ตามประเพณี (ข้อมูลวันหยุดอื่น ๆ ของปี 2570 ยังไม่ได้ใส่)" },
+
+    // ---------- ภาคเรียนที่ 1 / 2569 ----------
+    { start:"2026-01-10", type:"event", title:"วันเด็กแห่งชาติ", detail:"วันเด็กแห่งชาติ (วันเสาร์ที่สองของเดือนมกราคม) โรงเรียนจัดกิจกรรมและของรางวัลสำหรับนักเรียน ป.1–ป.6", src:"วันเด็กแห่งชาติ: วันเสาร์ที่สองของเดือนมกราคมทุกปี (กิจกรรมของ Crestview เป็นข้อมูลตัวอย่าง)" },
+    { start:"2026-05-14", type:"term", title:"เปิดภาคเรียนที่ 1 ปีการศึกษา 2569", detail:"วันเปิดเรียนวันแรกของภาคเรียนที่ 1 ตามที่ สพฐ. กำหนดให้โรงเรียนในสังกัดเปิดภาคเรียนในวันที่ 14 พฤษภาคม 2569", src:"ประกาศกำหนดเปิดภาคเรียนที่ 1 ปีการศึกษา 2569 ของ สพฐ." },
+    { start:"2026-06-04", type:"event", title:"พิธีไหว้ครู", detail:"นักเรียนทุกระดับชั้นร่วมพิธีไหว้ครู แสดงความเคารพและกตัญญูต่อคณาจารย์" },
+    { start:"2026-06-18", end:"2026-06-19", type:"event", title:"กีฬาภายในโรงเรียน", detail:"การแข่งขันกีฬาสีภายในโรงเรียน 2 วัน นักเรียน ป.1–ป.6 ร่วมกิจกรรมตามกลุ่มสี" },
+    { start:"2026-07-20", end:"2026-07-24", type:"exam", title:"สอบกลางภาคเรียนที่ 1", detail:"สอบวัดผลกลางภาค ป.1–ป.6 ครบ 6 วิชา (ภาษาไทย คณิตศาสตร์ วิทยาศาสตร์ สังคมศึกษา ภาษาอังกฤษ ศิลปะ) ตามตารางสอบที่โรงเรียนแจ้ง" },
+    { start:"2026-08-15", type:"event", title:"ผู้ปกครองพบครู (ภาคเรียนที่ 1)", detail:"ผู้ปกครองพบครูประจำชั้นเพื่อรับทราบคะแนนเก็บและผลสอบกลางภาค (วันเสาร์)" },
+    { start:"2026-09-21", end:"2026-09-25", type:"exam", title:"สอบปลายภาคเรียนที่ 1", detail:"สอบวัดผลปลายภาค ป.1–ป.6 ครบ 6 วิชา จัดก่อนวันสำคัญของโรงเรียน (30 ก.ย.) เพื่อไม่ให้ซ้อนกัน" },
+    { start:"2026-09-30", type:"event", title:"วันสำคัญของโรงเรียน", detail:"วันกิจกรรมสำคัญประจำปีของโรงเรียน รายละเอียดกิจกรรมจะประกาศเพิ่มเติมผ่านช่องทางของโรงเรียน", src:"กำหนดโดยโรงเรียน" },
+    { start:"2026-10-03", end:"2026-10-30", type:"term", title:"ปิดภาคเรียนที่ 1", detail:"ช่วงปิดภาคเรียนกลางปี ครูตรวจทานและประมวลผลการเรียนภาคเรียนที่ 1 (อ้างอิงช่วงปิดภาคเรียน 3–30 ต.ค. 2569 ของโรงเรียนมัธยมสาธิตมหาวิทยาลัยนเรศวร)" },
+    { start:"2026-11-02", type:"term", title:"เปิดภาคเรียนที่ 2 ปีการศึกษา 2569", detail:"วันเปิดเรียนวันแรกของภาคเรียนที่ 2" },
+    { start:"2026-11-07", type:"event", title:"ผู้ปกครองพบครู · รับผลการเรียนภาคเรียนที่ 1", detail:"ผู้ปกครองรับทราบผลการเรียนภาคเรียนที่ 1 และพบครูประจำชั้น (วันเสาร์)" },
+    { start:"2026-12-21", end:"2026-12-25", type:"exam", title:"สอบกลางภาคเรียนที่ 2", detail:"สอบวัดผลกลางภาค ป.1–ป.6 ครบ 6 วิชา ตามตารางสอบที่โรงเรียนแจ้ง" },
+
+    // ---------- ภาคเรียนที่ 2 / ต้นปี 2570 ----------
+    { start:"2027-01-05", type:"event", title:"ทำบุญวันขึ้นปีใหม่", detail:"กิจกรรมทำบุญตักบาตรและอธิษฐานเนื่องในวันขึ้นปีใหม่ของครูและนักเรียน" },
+    { start:"2027-01-09", type:"event", title:"วันเด็กแห่งชาติ", detail:"วันเด็กแห่งชาติ (วันเสาร์ที่สองของเดือนมกราคม) โรงเรียนจัดกิจกรรมสำหรับนักเรียน", src:"วันเด็กแห่งชาติ: วันเสาร์ที่สองของเดือนมกราคมทุกปี (กิจกรรมของ Crestview เป็นข้อมูลตัวอย่าง)" },
+    { start:"2027-01-16", type:"event", title:"ผู้ปกครองพบครู (ภาคเรียนที่ 2)", detail:"ผู้ปกครองพบครูเพื่อรับทราบคะแนนเก็บและผลสอบกลางภาคเรียนที่ 2 (วันเสาร์)" },
+    { start:"2027-03-01", end:"2027-03-05", type:"exam", title:"สอบปลายภาคเรียนที่ 2", detail:"สอบวัดผลปลายภาค ป.1–ป.6 ครบ 6 วิชา ตามตารางสอบที่โรงเรียนแจ้ง" },
+    { start:"2027-03-06", type:"term", title:"ปิดภาคเรียนที่ 2", detail:"วันสุดท้ายของปีการศึกษา 2569 เริ่มช่วงปิดภาคเรียนฤดูร้อน" },
+    { start:"2027-03-31", type:"event", title:"พิธีจบการศึกษา ป.6", detail:"พิธีมอบวุฒิบัตรแก่นักเรียนชั้น ป.6 ที่สำเร็จการศึกษาระดับประถมศึกษา ปีการศึกษา 2569" }
   ];
 
-  /* ---------------- ปฏิทิน (ใช้งานได้จริง เปลี่ยนเดือนได้) ---------------- */
+  /* ---------------- ปฏิทิน (ใช้งานได้จริง เปลี่ยนเดือนได้ กดวันที่ไฮไลต์เพื่อดูรายละเอียด) ---------------- */
   const thMonths = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
                      "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  const thMonthsShort = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
   const thDow = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+  const thDays = ["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"];
 
   let viewDate = new Date(); // เริ่มต้นที่เดือน/ปีปัจจุบัน
+  viewDate.setDate(1);
   const today = new Date();
+  let selDate = null;
 
+  calendarEvents.forEach(e => { if (!e.end) e.end = e.start; });
   function pad(n){ return String(n).padStart(2,'0'); }
-  function eventsFor(dateStr){ return schoolEvents.filter(e => e.date === dateStr); }
+  function parseISO(s){ const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+  function byRank(a, b){ return EVENT_TYPES[a.type].rank - EVENT_TYPES[b.type].rank || a.start.localeCompare(b.start); }
+  function eventsOn(iso){ return calendarEvents.filter(e => e.start <= iso && iso <= e.end).sort(byRank); }
+
+  function fmtRange(e){
+    const a = parseISO(e.start), b = parseISO(e.end);
+    const ya = a.getFullYear() + 543, yb = b.getFullYear() + 543;
+    if (e.start === e.end) return `วัน${thDays[a.getDay()]}ที่ ${a.getDate()} ${thMonths[a.getMonth()]} ${ya}`;
+    if (a.getMonth() === b.getMonth() && ya === yb) return `${a.getDate()} – ${b.getDate()} ${thMonths[a.getMonth()]} ${ya}`;
+    if (ya === yb) return `${a.getDate()} ${thMonthsShort[a.getMonth()]} – ${b.getDate()} ${thMonthsShort[b.getMonth()]} ${ya}`;
+    return `${a.getDate()} ${thMonthsShort[a.getMonth()]} ${ya} – ${b.getDate()} ${thMonthsShort[b.getMonth()]} ${yb}`;
+  }
+
+  function eventItemHTML(e){
+    const t = EVENT_TYPES[e.type];
+    return `<div class="ev-item">
+      <div class="ev-date">${fmtRange(e)}<span class="ev-chip ev-${e.type}">${t.label}</span></div>
+      <div><div class="ev-title">${e.title}</div><p class="ev-detail">${e.detail}</p>
+      <div class="ev-meta">อ้างอิง: ${e.src || t.src}</div></div></div>`;
+  }
+
+  function renderCalNote(year, month, daysInMonth){
+    const note = document.getElementById('calNote');
+    let list, heading, back = '';
+    if (selDate){
+      const d = parseISO(selDate);
+      list = eventsOn(selDate);
+      heading = `วัน${thDays[d.getDay()]}ที่ ${d.getDate()} ${thMonths[d.getMonth()]} ${d.getFullYear() + 543}`;
+      back = '<button type="button" class="btn btn-line btn-sm" id="calShowMonth">ดูทั้งเดือน</button>';
+    } else {
+      const ms = `${year}-${pad(month + 1)}-01`, me = `${year}-${pad(month + 1)}-${pad(daysInMonth)}`;
+      list = calendarEvents.filter(e => e.start <= me && e.end >= ms)
+                           .sort((a, b) => a.start.localeCompare(b.start) || byRank(a, b));
+      heading = `รายการในเดือน${thMonths[month]} พ.ศ. ${year + 543}`;
+    }
+    note.innerHTML = `<div class="cal-note-head"><h4>${heading}</h4>${back}</div>` +
+      (list.length ? list.map(eventItemHTML).join('')
+                   : '<div class="cal-empty">ไม่มีวันหยุดหรือกิจกรรมที่ระบุไว้ในเดือนนี้</div>');
+    const btn = document.getElementById('calShowMonth');
+    if (btn) btn.addEventListener('click', () => { selDate = null; renderCalendar(); });
+  }
 
   function renderCalendar(){
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
 
-    document.getElementById('calTitle').textContent =
-      `${thMonths[month]} พ.ศ. ${year + 543}`;
+    document.getElementById('calTitle').textContent = `${thMonths[month]} พ.ศ. ${year + 543}`;
 
     const grid = document.getElementById('calGrid');
     grid.innerHTML = '';
@@ -1058,41 +1206,16 @@
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, month, 0).getDate();
-
     const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
-    let monthNote = '';
 
     for (let i = 0; i < totalCells; i++){
       const cell = document.createElement('div');
       cell.className = 'cal-cell';
-      let dayNum, cellDate, inMonth = true;
+      let dayNum, inMonth = true;
 
-      if (i < firstDay){
-        dayNum = daysInPrevMonth - firstDay + i + 1;
-        cell.classList.add('pad');
-        inMonth = false;
-      } else if (i >= firstDay + daysInMonth){
-        dayNum = i - (firstDay + daysInMonth) + 1;
-        cell.classList.add('pad');
-        inMonth = false;
-      } else {
-        dayNum = i - firstDay + 1;
-      }
-
-      if (inMonth){
-        cellDate = `${year}-${pad(month+1)}-${pad(dayNum)}`;
-        const evs = eventsFor(cellDate);
-
-        if (year === today.getFullYear() && month === today.getMonth() && dayNum === today.getDate()){
-          cell.classList.add('today');
-        }
-        if (evs.length){
-          cell.classList.add('highlight');
-          monthNote += evs.map(e =>
-            `<div><strong>${dayNum} ${thMonths[month]} ${year+543}</strong> — ${e.label}</div>`
-          ).join('');
-        }
-      }
+      if (i < firstDay){ dayNum = daysInPrevMonth - firstDay + i + 1; cell.classList.add('pad'); inMonth = false; }
+      else if (i >= firstDay + daysInMonth){ dayNum = i - (firstDay + daysInMonth) + 1; cell.classList.add('pad'); inMonth = false; }
+      else { dayNum = i - firstDay + 1; }
 
       const num = document.createElement('span');
       num.className = 'num';
@@ -1100,28 +1223,72 @@
       cell.appendChild(num);
 
       if (inMonth){
-        const evs = eventsFor(`${year}-${pad(month+1)}-${pad(dayNum)}`);
-        evs.forEach(e => {
-          const dot = document.createElement('span');
-          dot.className = 'cal-dot';
-          dot.textContent = e.label;
-          cell.appendChild(dot);
-        });
-      }
+        const iso = `${year}-${pad(month + 1)}-${pad(dayNum)}`;
+        const evs = eventsOn(iso);
+        if (year === today.getFullYear() && month === today.getMonth() && dayNum === today.getDate()) cell.classList.add('today');
+        if (iso === selDate) cell.classList.add('sel');
 
+        if (evs.length){
+          cell.classList.add('has-ev', 't-' + evs[0].type);
+          cell.dataset.date = iso;
+          cell.tabIndex = 0;
+          cell.setAttribute('role', 'button');
+          const names = evs.map(e => e.title).join(' / ');
+          cell.title = names;
+          cell.setAttribute('aria-label', `${dayNum} ${thMonths[month]}: ${names}`);
+
+          // ช่วงหลายวัน: แสดงชื่อที่วันแรก และที่วันอาทิตย์ (ต้นแถว) ส่วนวันอื่นแสดงเป็นแถบสี
+          let labels = 0, extra = 0;
+          evs.forEach(e => {
+            const isStart = iso === e.start, weekStart = (i % 7 === 0);
+            const line = document.createElement('span');
+            if (isStart || weekStart){
+              if (labels >= 2){ extra++; return; }
+              labels++;
+              line.className = 'cal-ev ev-' + e.type;
+              line.innerHTML = `<span class="evt">${e.title}${isStart ? '' : ' (ต่อ)'}</span>`;
+            } else {
+              line.className = 'cal-ev cont ev-' + e.type;
+            }
+            cell.appendChild(line);
+          });
+          if (extra){
+            const more = document.createElement('span');
+            more.className = 'cal-more';
+            more.textContent = `+${extra} รายการ`;
+            cell.appendChild(more);
+          }
+        }
+      }
       grid.appendChild(cell);
     }
-
-    document.getElementById('calNote').innerHTML =
-      monthNote || '<span style="color:#8a8d94">ไม่มีวันสำคัญที่ระบุไว้ในเดือนนี้</span>';
+    renderCalNote(year, month, daysInMonth);
   }
 
+  function toggleDay(cell){
+    selDate = (selDate === cell.dataset.date) ? null : cell.dataset.date;
+    renderCalendar();
+    if (selDate){
+      const again = document.querySelector(`.cal-cell[data-date="${selDate}"]`);
+      if (again) again.focus();
+    }
+  }
+  document.getElementById('calGrid').addEventListener('click', (e) => {
+    const c = e.target.closest('.cal-cell.has-ev');
+    if (c) toggleDay(c);
+  });
+  document.getElementById('calGrid').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const c = e.target.closest('.cal-cell.has-ev');
+    if (c){ e.preventDefault(); toggleDay(c); }
+  });
+
   document.getElementById('calPrev').addEventListener('click', () => {
-    viewDate.setMonth(viewDate.getMonth() - 1);
+    viewDate.setMonth(viewDate.getMonth() - 1); selDate = null;
     renderCalendar();
   });
   document.getElementById('calNext').addEventListener('click', () => {
-    viewDate.setMonth(viewDate.getMonth() + 1);
+    viewDate.setMonth(viewDate.getMonth() + 1); selDate = null;
     renderCalendar();
   });
 
